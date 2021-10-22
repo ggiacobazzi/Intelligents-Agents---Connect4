@@ -1,5 +1,7 @@
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 import javax.swing.*;
 
 public class Connect4 {
@@ -21,13 +23,21 @@ public class Connect4 {
 
 class Connect4JFrame extends JFrame implements ActionListener {
 
-        private Button          btn1, btn2, btn3, btn4, btn5, btn6, btn7;
+        private final Button          btn1;
+        private final Button btn2;
+        private final Button btn3;
+        private final Button btn4;
+        private final Button btn5;
+        private final Button btn6;
+        private final Button btn7;
         private Label           lblSpacer;
-        private MovesPanel      movesPanel;
-        MenuItem                newMI, exitMI, redMI, yellowMI;
+        private final MovesPanel      movesPanel;
+        MenuItem                newMI, exitMI, redMI, yellowMI, playerMI, randomPlayerMI;
         int[][]                 theArray;
         boolean                 end=false;
         boolean                 gameStart;
+        boolean                 agent=false;
+        public static String    agentMode;
         public static final int BLANK = 0;
         public static final int RED = 1;
         public static final int YELLOW = 2;
@@ -63,6 +73,14 @@ class Connect4JFrame extends JFrame implements ActionListener {
                 yellowMI.addActionListener(this);
                 optMenu.add(yellowMI);
                 mbar.add(optMenu);
+                Menu playerMenu = new Menu("Player");
+                playerMI = new MenuItem("Normal");
+                playerMI.addActionListener(this);
+                playerMenu.add(playerMI);
+                randomPlayerMI = new MenuItem("Random");
+                randomPlayerMI.addActionListener(this);
+                playerMenu.add(randomPlayerMI);
+                mbar.add(playerMenu);
                 setMenuBar(mbar);
 
                 // Build control panel.
@@ -257,7 +275,35 @@ class Connect4JFrame extends JFrame implements ActionListener {
                         if (!gameStart) activeColour=RED;
                 } else if (e.getSource() == yellowMI) {
                         if (!gameStart) activeColour=YELLOW;
+                } else if(e.getSource() == playerMI){
+                        if(!gameStart){
+                                System.out.println("Player playing");
+                        }
+                } else if(e.getSource() == randomPlayerMI){
+                        if(!gameStart){
+                                this.agent = true;
+                                agentMode = "random";
+                                System.out.println("Random player playing");
+                        }
+                }
+
+                if(this.agent){
+                        agentPlaying();
                 }
         } // end ActionPerformed
 
+        public void agentPlaying(){
+                switch (agentMode){
+                        case "random":{
+                                int nextMove = ThreadLocalRandom.current().nextInt(1, 8);
+                                putDisk(nextMove);
+                        }
+                        case "min-max":{
+                                //
+                        }
+                        case "min-max_a-b":{
+
+                        }
+                }
+        }
 } // class
