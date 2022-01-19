@@ -1,8 +1,6 @@
-import java.util.ArrayList;
-
 public class GameBoard {
+
     private final int[][]   gameBoard;
-    public static final int EMPTY_COLOR = 0;
     public Player           firstPlayer;
     public Player           secondPlayer;
     public Player           winner;
@@ -14,9 +12,9 @@ public class GameBoard {
     }
 
     public boolean checkBoard(){
-        for(int i = 0; i < gameBoard.length; i++){
-            for(int j = 0; j < gameBoard[1].length; j++){
-                if(gameBoard[i][j] == 0)
+        for (int[] ints : gameBoard) {
+            for (int anInt : ints) {
+                if (anInt == 0)
                     return false;
             }
         }
@@ -38,14 +36,78 @@ public class GameBoard {
     }
 
 
-
     public void putDisk(GameBoard board, int n, boolean playerTurn) {
-        int row;
-        for (row=0; row< gameBoard.length; row++)
-            if (board.getGameBoard()[row][n]>0) break;
-        if (row>0) {
-            board.getGameBoard()[--row][n] = playerTurn ? firstPlayer.getPlayerColor() : secondPlayer.getPlayerColor();
+        for (int row = gameBoard.length -1 ; row >= 0; row--)
+            if (board.getGameBoard()[row][n] == 0){
+                board.getGameBoard()[row][n] = playerTurn ? firstPlayer.getPlayerColor() : secondPlayer.getPlayerColor();
+                return;
+            }
+    }
+
+    public boolean putDisk(GameBoard board, int n, int playerTurn) {
+        for (int row = gameBoard.length -1 ; row >= 0; row--)
+            if (board.getGameBoard()[row][n] == 0){
+                board.getGameBoard()[row][n] = playerTurn;
+                return true;
+            }
+        return false;
+    }
+
+    public WinnerInfo check4() {
+        WinnerInfo wInfo = new WinnerInfo();
+        for (int row = 0; row < gameBoard.length; row++) {
+            for (int col = 0; col < gameBoard[1].length - 3; col++) {
+                int curr = gameBoard[row][col];
+                if (curr > 0
+                        && curr == gameBoard[row][col + 1]
+                        && curr == gameBoard[row][col + 2]
+                        && curr == gameBoard[row][col + 3]) {
+                    wInfo = new WinnerInfo(1, gameBoard[row][col]);
+                    return wInfo;
+                }
+            }
         }
+        // vertical columns
+        for (int col = 0; col < gameBoard[1].length; col++) {
+            for (int row = 0; row < gameBoard.length - 3; row++) {
+                int curr = gameBoard[row][col];
+                if (curr > 0
+                        && curr == gameBoard[row + 1][col]
+                        && curr == gameBoard[row + 2][col]
+                        && curr == gameBoard[row + 3][col]) {
+                    wInfo = new WinnerInfo(1, gameBoard[row][col]);
+                    return wInfo;
+                }
+
+            }
+        }
+        // diagonal lower left to upper right
+        for (int row = 0; row < gameBoard.length - 3; row++) {
+            for (int col = 0; col < gameBoard[1].length - 3; col++) {
+                int curr = gameBoard[row][col];
+                if (curr > 0
+                        && curr == gameBoard[row + 1][col + 1]
+                        && curr == gameBoard[row + 2][col + 2]
+                        && curr == gameBoard[row + 3][col + 3]) {
+                    wInfo = new WinnerInfo(1, gameBoard[row][col]);
+                    return wInfo;
+                }
+            }
+        }
+        // diagonal upper left to lower right
+        for (int row = gameBoard.length - 1; row >= 3; row--) {
+            for (int col = 0; col < gameBoard[1].length - 3; col++) {
+                int curr = gameBoard[row][col];
+                if (curr > 0
+                        && curr == gameBoard[row - 1][col + 1]
+                        && curr == gameBoard[row - 2][col + 2]
+                        && curr == gameBoard[row - 3][col + 3]) {
+                    wInfo = new WinnerInfo(1, gameBoard[row][col]);
+                    return wInfo;
+                }
+            }
+        }
+        return wInfo;
     }
 
 
@@ -95,8 +157,11 @@ public class GameBoard {
 
 
         totalEvaluation = verticalPoints + horizontalPoints + descendantDiagonalPoints + ascendantDiagonalPoints;
+
+
         return totalEvaluation;
     }
+
 
     public int calcScore(int row, int col, int incrementNumRow, int incrementNumCol){
         int winnerPoints = 0, enemyPoints = 0;
@@ -119,26 +184,6 @@ public class GameBoard {
             return MiniMaxAI.MAX_WINNING_SCORE;
         else
             return winnerPoints;
-    }
-
-    public ArrayList<Integer> checkValidMoves(GameBoard board) {
-        ArrayList<Integer> possibleMoves = new ArrayList<>();
-        for (int col = 0; col < gameBoard[1].length; col++){
-            for (int row = 0; row < gameBoard.length; row++) {
-                if (board.getGameBoard()[row][col] == EMPTY_COLOR) {
-                    possibleMoves.add(col);
-                    break;
-                }
-            }
-        }
-
-        if(!simulation){
-            System.out.print("Valid Moves: ");
-            for(int i : possibleMoves)
-                System.out.print("[" + i + "] ");
-        }
-
-        return possibleMoves;
     }
 
     public int[][] getGameBoard() {

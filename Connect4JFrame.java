@@ -17,7 +17,7 @@ public class Connect4JFrame extends JFrame implements ActionListener {
     private final Button btnStart;
     private final ArrayList<Button> btnList = new ArrayList<>();
     private final MovesPanel movesPanel;
-    MenuItem newMI, exitMI, redMI, yellowMI, simulationsMI, playerMI, randomPlayerMI, miniMaxPlayerMI,
+    private final MenuItem newMI, exitMI, simulationsMI, playerMI, randomPlayerMI, miniMaxPlayerMI,
             playerPrunedMI, randomRandomMI, randomMiniMI, randomPrunedMI, miniMiniMI, miniPrunedMI, prunedPrunedMI;
     public GameBoard board;
     boolean end = false;
@@ -31,14 +31,12 @@ public class Connect4JFrame extends JFrame implements ActionListener {
     public static final int RED = 1;
     public static final int YELLOW = 2;
 
-    public static final int MAXROW = 6;     // 6 rows
-    public static final int MAXCOL = 7;     // 7 columns
+    public static final int MAXROW = 6;
+    public static final int MAXCOL = 7;
     public static int NEXTMOVE = 0;
 
-    public static final String SPACE = "                  "; // 18 spaces
+    public static final String SPACE = "                  ";
     public int gameCounter = 0;
-
-    int activeColour = RED;
 
     public static int REDMOVES;
     public static int YELLOWMOVES;
@@ -48,7 +46,7 @@ public class Connect4JFrame extends JFrame implements ActionListener {
     public Connect4 parent;
 
     public Connect4JFrame() {
-        setTitle("Connect4 by Chris Clarke");
+        setTitle("Connect4");
         MenuBar mbar = new MenuBar();
 
         Menu fileMenu = new Menu("File");
@@ -61,13 +59,6 @@ public class Connect4JFrame extends JFrame implements ActionListener {
         mbar.add(fileMenu);
 
         Menu optMenu = new Menu("Options");
-
-        redMI = new MenuItem("Red starts");
-        redMI.addActionListener(this);
-        optMenu.add(redMI);
-        yellowMI = new MenuItem("Yellow starts");
-        yellowMI.addActionListener(this);
-        optMenu.add(yellowMI);
         simulationsMI = new MenuItem("Simulations options");
         simulationsMI.addActionListener(this);
         optMenu.add(simulationsMI);
@@ -118,7 +109,6 @@ public class Connect4JFrame extends JFrame implements ActionListener {
         mbar.add(playerMenu);
         setMenuBar(mbar);
 
-        // Build control panel.
         Panel panel = new Panel();
 
         btn1 = new Button("1");
@@ -178,7 +168,6 @@ public class Connect4JFrame extends JFrame implements ActionListener {
 
         this.movesPanel = new MovesPanel(REDMOVES, YELLOWMOVES, TOTALMOVES, elapsedTime);
 
-
         btnStart = new Button("Start");
         btnStart.addActionListener(this);
         btnStart.setEnabled(true);
@@ -190,12 +179,10 @@ public class Connect4JFrame extends JFrame implements ActionListener {
 
         add(panel, BorderLayout.NORTH);
         add(bottomPanel, BorderLayout.SOUTH);
-//        add(this.movesPanel, BorderLayout.SOUTH);
-//        add(btnStart, BorderLayout.EAST);
 
         initialize();
-        firstPlayer = new Player("human", 1, false, playerTurn);
-        secondPlayer = new Player("human", 2, false, !playerTurn);
+        firstPlayer = new Player("human", 1, false);
+        secondPlayer = new Player("human", 2, false);
         setPlayers(firstPlayer, secondPlayer);
 
         setSize(1024, 768);
@@ -259,7 +246,7 @@ public class Connect4JFrame extends JFrame implements ActionListener {
 
             }
 
-            WinnerInfo wInfo = check4();
+            WinnerInfo wInfo = board.check4();
             if (wInfo.winningStatus == 1) {
                 displayWinner(wInfo.getPlayerColor());
             }
@@ -278,6 +265,7 @@ public class Connect4JFrame extends JFrame implements ActionListener {
             return;
         gameStart = true;
         repaint();
+
         // First player turn
         if (playerTurn) {
             playerTurn(firstPlayer);
@@ -286,11 +274,8 @@ public class Connect4JFrame extends JFrame implements ActionListener {
             movesPanel.updateLabel(false, REDMOVES,
                     YELLOWMOVES, TOTALMOVES, elapsedTime);
 
-            WinnerInfo wInfo = check4();
-            if (wInfo.winningStatus == 1) {
-                displayWinner(wInfo.getPlayerColor());
-            }
-            playerTurn = !playerTurn;
+            midTurn();
+
             if (!secondPlayer.getPlayerType().equals("human")) {
                 gameTurn();
             }
@@ -303,18 +288,13 @@ public class Connect4JFrame extends JFrame implements ActionListener {
             movesPanel.updateLabel(true, REDMOVES,
                     YELLOWMOVES, TOTALMOVES, elapsedTime);
 
-            WinnerInfo wInfo = check4();
-            if (wInfo.winningStatus == 1) {
-                displayWinner(wInfo.getPlayerColor());
-            }
-            playerTurn = !playerTurn;
+            midTurn();
+
             if (!firstPlayer.getPlayerType().equals("human")) {
                 gameTurn();
             }
         }
-        gameCounter += 1;
-        if (!parent.simulation)
-            System.out.println("Turn: " + gameCounter);
+
     }
 
     public void playerTurn(Player player) {
@@ -322,7 +302,7 @@ public class Connect4JFrame extends JFrame implements ActionListener {
         switch (player.getPlayerType()) {
             case "human": {
                 if (!parent.simulation)
-                    System.out.println("NEXTMOVE: " + NEXTMOVE);
+                    System.out.println("Human move: " + NEXTMOVE);
                 break;
             }
             case "random": {
@@ -348,10 +328,21 @@ public class Connect4JFrame extends JFrame implements ActionListener {
         final long endMoveTime = System.nanoTime();
         long tempElapsedTime = endMoveTime - startMoveTime;
         elapsedTime = (long) (tempElapsedTime / 1E6);
-        if (!parent.simulation)
-            System.out.println("time: " + elapsedTime);
     }
 
+
+    public void midTurn(){
+        gameCounter += 1;
+        if (!parent.simulation)
+            System.out.println("Turn: " + gameCounter);
+
+        WinnerInfo wInfo = board.check4();
+        if (wInfo.winningStatus == 1) {
+            displayWinner(wInfo.getPlayerColor());
+        }
+
+        playerTurn = !playerTurn;
+    }
 
     public void displayWinner(int n) {
         parent.endGame(n, RED, TOTALMOVES);
@@ -359,66 +350,6 @@ public class Connect4JFrame extends JFrame implements ActionListener {
         btnStart.setEnabled(false);
     }
 
-    public WinnerInfo check4() {
-        // see if there are 4 disks in a row: horizontal, vertical or diagonal
-        // horizontal rows
-        WinnerInfo wInfo = new WinnerInfo();
-        for (int row = 0; row < board.getGameBoard().length; row++) {
-            for (int col = 0; col < board.getGameBoard()[1].length - 3; col++) {
-                int curr = board.getGameBoard()[row][col];
-                if (curr > 0
-                        && curr == board.getGameBoard()[row][col + 1]
-                        && curr == board.getGameBoard()[row][col + 2]
-                        && curr == board.getGameBoard()[row][col + 3]) {
-                    wInfo = new WinnerInfo(1, board.getGameBoard()[row][col]);
-                    return wInfo;
-                }
-            }
-        }
-        // vertical columns
-        for (int col = 0; col < board.getGameBoard()[1].length; col++) {
-            for (int row = 0; row < board.getGameBoard().length - 3; row++) {
-                int curr = board.getGameBoard()[row][col];
-                if (curr > 0
-                        && curr == board.getGameBoard()[row + 1][col]
-                        && curr == board.getGameBoard()[row + 2][col]
-                        && curr == board.getGameBoard()[row + 3][col]) {
-                    wInfo = new WinnerInfo(1, board.getGameBoard()[row][col]);
-                    return wInfo;
-                }
-
-            }
-        }
-        // diagonal lower left to upper right
-        for (int row = 0; row < board.getGameBoard().length - 3; row++) {
-            for (int col = 0; col < board.getGameBoard()[1].length - 3; col++) {
-                int curr = board.getGameBoard()[row][col];
-                if (curr > 0
-                        && curr == board.getGameBoard()[row + 1][col + 1]
-                        && curr == board.getGameBoard()[row + 2][col + 2]
-                        && curr == board.getGameBoard()[row + 3][col + 3]) {
-                    wInfo = new WinnerInfo(1, board.getGameBoard()[row][col]);
-                    return wInfo;
-                }
-            }
-        }
-        // diagonal upper left to lower right
-        for (int row = board.getGameBoard().length - 1; row >= 3; row--) {
-            for (int col = 0; col < board.getGameBoard()[1].length - 3; col++) {
-                int curr = board.getGameBoard()[row][col];
-                if (curr > 0
-                        && curr == board.getGameBoard()[row - 1][col + 1]
-                        && curr == board.getGameBoard()[row - 2][col + 2]
-                        && curr == board.getGameBoard()[row - 3][col + 3]) {
-                    wInfo = new WinnerInfo(1, board.getGameBoard()[row][col]);
-                    return wInfo;
-                }
-            }
-        }
-
-        // no win
-        return wInfo;
-    } // end check4
 
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == btn1) {
@@ -458,7 +389,7 @@ public class Connect4JFrame extends JFrame implements ActionListener {
             }
         } else if (e.getSource() == btnStart) {
             if (!end) {
-                System.out.println("start");
+                System.out.println("Started game");
                 if (onlyAI) {
                     parent.newGame(firstPlayer, secondPlayer, false);
                     gameTurnAuto();
@@ -471,8 +402,8 @@ public class Connect4JFrame extends JFrame implements ActionListener {
         } else if (e.getSource() == newMI) {
             end = false;
             initialize();
-            Player firstPlayer = new Player(this.firstPlayer.getPlayerType(), 1, this.firstPlayer.isNotHuman(), playerTurn);
-            Player secondPlayer = new Player(this.secondPlayer.getPlayerType(), 2, this.secondPlayer.isNotHuman(), !playerTurn);
+            Player firstPlayer = new Player(this.firstPlayer.getPlayerType(), 1, this.firstPlayer.isNotHuman());
+            Player secondPlayer = new Player(this.secondPlayer.getPlayerType(), 2, this.secondPlayer.isNotHuman());
 
             if (firstPlayer.getPlayerType().equals("minimax") || firstPlayer.getPlayerType().equals("pruned"))
                 firstPlayer.setPlayers(firstPlayer, secondPlayer);
@@ -485,26 +416,16 @@ public class Connect4JFrame extends JFrame implements ActionListener {
             repaint();
         } else if (e.getSource() == exitMI) {
             System.exit(0);
-        } else if (e.getSource() == redMI) {
-            if (!gameStart) {
-                playerTurn = true;
-                activeColour = RED;
-            }
-        } else if (e.getSource() == yellowMI) {
-            if (!gameStart) {
-                playerTurn = false;
-                activeColour = YELLOW;
-            }
         } else if (e.getSource() == simulationsMI) {
             System.out.println("Opening simulations options");
             Simulations simOptionsWindow = new Simulations(parent);
         } else if (e.getSource() == playerMI) {
             if (!gameStart) {
                 initialize();
-                Player firstPlayer = new Player("human", 1, false, playerTurn);
-                Player secondPlayer = new Player("human", 2, false, !playerTurn);
+                Player firstPlayer = new Player("human", 1, false);
+                Player secondPlayer = new Player("human", 2, false);
                 setPlayers(firstPlayer, secondPlayer);
-                JOptionPane.showMessageDialog(parent.getGuiFrame(), "Human vs Human selected");
+                JOptionPane.showMessageDialog(Connect4.getGuiFrame(), "Human vs Human selected");
                 System.out.println("Player vs Player");
                 repaint();
             }
@@ -512,10 +433,10 @@ public class Connect4JFrame extends JFrame implements ActionListener {
             if (!gameStart) {
                 agentMode = "random";
                 initialize();
-                Player firstPlayer = new Player("human", 1, false, playerTurn);
-                Player secondPlayer = new Player("random", 2, false, !playerTurn);
+                Player firstPlayer = new Player("human", 1, false);
+                Player secondPlayer = new Player("random", 2, false);
                 setPlayers(firstPlayer, secondPlayer);
-                JOptionPane.showMessageDialog(parent.getGuiFrame(), "Human vs Random selected");
+                JOptionPane.showMessageDialog(Connect4.getGuiFrame(), "Human vs Random selected");
                 System.out.println("Player vs Random");
                 repaint();
             }
@@ -523,99 +444,99 @@ public class Connect4JFrame extends JFrame implements ActionListener {
             if (!gameStart) {
                 agentMode = "mini-max";
                 initialize();
-                Player firstPlayer = new Player("human", 1, false, playerTurn);
-                Player secondPlayer = new Player("minimax", 2, true, !playerTurn);
+                Player firstPlayer = new Player("human", 1, false);
+                Player secondPlayer = new Player("minimax", 2, true);
                 secondPlayer.setPlayers(secondPlayer, firstPlayer);
                 setPlayers(firstPlayer, secondPlayer);
-                JOptionPane.showMessageDialog(parent.getGuiFrame(), "Human vs Minimax selected");
+                JOptionPane.showMessageDialog(Connect4.getGuiFrame(), "Human vs Minimax selected");
                 System.out.println("Player vs MiniMax");
                 repaint();
             }
         } else if (e.getSource() == playerPrunedMI) {
             if (!gameStart) {
                 initialize();
-                Player firstPlayer = new Player("human", 1, false, playerTurn);
-                Player secondPlayer = new Player("pruned", 2, true, !playerTurn);
+                Player firstPlayer = new Player("human", 1, false);
+                Player secondPlayer = new Player("pruned", 2, true);
                 secondPlayer.setPlayers(secondPlayer, firstPlayer);
                 setPlayers(firstPlayer, secondPlayer);
-                JOptionPane.showMessageDialog(parent.getGuiFrame(), "Human vs Pruned selected");
+                JOptionPane.showMessageDialog(Connect4.getGuiFrame(), "Human vs Pruned selected");
                 System.out.println("Player vs Pruned");
                 repaint();
             }
         } else if (e.getSource() == randomRandomMI) {
             if (!gameStart) {
                 initialize();
-                Player firstPlayer = new Player("random", 1, false, playerTurn);
-                Player secondPlayer = new Player("random", 2, false, !playerTurn);
+                Player firstPlayer = new Player("random", 1, false);
+                Player secondPlayer = new Player("random", 2, false);
                 setPlayers(firstPlayer, secondPlayer);
                 onlyAI = true;
-                JOptionPane.showMessageDialog(parent.getGuiFrame(), "Random vs Random selected");
+                JOptionPane.showMessageDialog(Connect4.getGuiFrame(), "Random vs Random selected");
                 System.out.println("Random vs Random");
                 repaint();
             }
         } else if (e.getSource() == randomMiniMI) {
             if (!gameStart) {
                 initialize();
-                Player firstPlayer = new Player("random", 1, false, playerTurn);
-                Player secondPlayer = new Player("minimax", 2, true, !playerTurn);
+                Player firstPlayer = new Player("random", 1, false);
+                Player secondPlayer = new Player("minimax", 2, true);
                 secondPlayer.setPlayers(secondPlayer, firstPlayer);
                 setPlayers(firstPlayer, secondPlayer);
                 onlyAI = true;
-                JOptionPane.showMessageDialog(parent.getGuiFrame(), "Random vs Minimax selected");
+                JOptionPane.showMessageDialog(Connect4.getGuiFrame(), "Random vs Minimax selected");
                 System.out.println("Random vs MiniMax");
                 repaint();
             }
         } else if (e.getSource() == randomPrunedMI) {
             if (!gameStart) {
                 initialize();
-                Player firstPlayer = new Player("random", 1, false, playerTurn);
-                Player secondPlayer = new Player("pruned", 2, true, !playerTurn);
+                Player firstPlayer = new Player("random", 1, false);
+                Player secondPlayer = new Player("pruned", 2, true);
                 secondPlayer.setPlayers(secondPlayer, firstPlayer);
                 setPlayers(firstPlayer, secondPlayer);
                 onlyAI = true;
-                JOptionPane.showMessageDialog(parent.getGuiFrame(), "Random vs Pruned selected");
+                JOptionPane.showMessageDialog(Connect4.getGuiFrame(), "Random vs Pruned selected");
                 System.out.println("Random vs Pruned");
                 repaint();
             }
         } else if (e.getSource() == miniMiniMI) {
             if (!gameStart) {
                 initialize();
-                Player firstPlayer = new Player("minimax", 1, true, playerTurn);
-                Player secondPlayer = new Player("minimax", 2, true, !playerTurn);
+                Player firstPlayer = new Player("minimax", 1, true);
+                Player secondPlayer = new Player("minimax", 2, true);
 
                 firstPlayer.setPlayers(firstPlayer, secondPlayer);
                 secondPlayer.setPlayers(secondPlayer, firstPlayer);
                 setPlayers(firstPlayer, secondPlayer);
                 onlyAI = true;
-                JOptionPane.showMessageDialog(parent.getGuiFrame(), "Minimax vs Minimax selected");
+                JOptionPane.showMessageDialog(Connect4.getGuiFrame(), "Minimax vs Minimax selected");
                 System.out.println("MiniMax vs MiniMax");
                 repaint();
             }
         } else if (e.getSource() == miniPrunedMI) {
             if (!gameStart) {
                 initialize();
-                Player firstPlayer = new Player("minimax", 1, true, playerTurn);
-                Player secondPlayer = new Player("pruned", 2, true, !playerTurn);
+                Player firstPlayer = new Player("minimax", 1, true);
+                Player secondPlayer = new Player("pruned", 2, true);
 
                 firstPlayer.setPlayers(firstPlayer, secondPlayer);
                 secondPlayer.setPlayers(secondPlayer, firstPlayer);
                 setPlayers(firstPlayer, secondPlayer);
                 onlyAI = true;
-                JOptionPane.showMessageDialog(parent.getGuiFrame(), "Minimax vs Pruned selected");
+                JOptionPane.showMessageDialog(Connect4.getGuiFrame(), "Minimax vs Pruned selected");
                 System.out.println("MiniMax vs Pruned");
                 repaint();
             }
         } else if (e.getSource() == prunedPrunedMI) {
             if (!gameStart) {
                 initialize();
-                Player firstPlayer = new Player("pruned", 1, true, playerTurn);
-                Player secondPlayer = new Player("pruned", 2, true, !playerTurn);
+                Player firstPlayer = new Player("pruned", 1, true);
+                Player secondPlayer = new Player("pruned", 2, true);
 
                 firstPlayer.setPlayers(firstPlayer, secondPlayer);
                 secondPlayer.setPlayers(secondPlayer, firstPlayer);
                 setPlayers(firstPlayer, secondPlayer);
                 onlyAI = true;
-                JOptionPane.showMessageDialog(parent.getGuiFrame(), "Pruned vs Pruned selected");
+                JOptionPane.showMessageDialog(Connect4.getGuiFrame(), "Pruned vs Pruned selected");
                 System.out.println("Pruned vs Pruned");
                 repaint();
             }
@@ -634,4 +555,4 @@ public class Connect4JFrame extends JFrame implements ActionListener {
     }
 
 
-} // class
+}

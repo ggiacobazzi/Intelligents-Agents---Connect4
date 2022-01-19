@@ -7,8 +7,6 @@ import java.io.PrintWriter;
 
 public class Connect4 extends Component {
 
-
-
         public static Connect4JFrame  guiFrame;
         public boolean                simulation;
         public String                 outputFilePath;
@@ -46,6 +44,7 @@ public class Connect4 extends Component {
                                 JOptionPane.showMessageDialog(guiFrame, "Red wins");
                         else
                                 JOptionPane.showMessageDialog(guiFrame, "Yellow wins");
+                        System.out.println("Finished game");
                         System.out.println("Total moves done: " + totalMoves);
                 }
                 else{
@@ -70,13 +69,13 @@ public class Connect4 extends Component {
 
         public void simulationsGames(int simNum, String firstPlayerType, String secondPlayerType){
                 String fileName = "output" + firstPlayerType + secondPlayerType;
-                Player firstPlayer = new Player(firstPlayerType.toLowerCase(), 1, true ,true);
-                Player secondPlayer = new Player(secondPlayerType.toLowerCase(), 2, true, false);
+                Player firstPlayer = new Player(firstPlayerType.toLowerCase(), 1, true);
+                Player secondPlayer = new Player(secondPlayerType.toLowerCase(), 2, true);
 
                 firstPlayer.setPlayers(firstPlayer, secondPlayer);
                 secondPlayer.setPlayers(secondPlayer, firstPlayer);
 
-                this.outputFilePath = System.getProperty("user.dir") + fileName + ".txt";
+                this.outputFilePath = System.getProperty("user.dir") + "/" + fileName + ".txt";
                 System.out.println("Path: " + outputFilePath);
                 System.out.println("Started simulations");
                 for(int i = 1; i <= simNum; i++){
@@ -86,7 +85,7 @@ public class Connect4 extends Component {
                         System.out.println("Simulation " + i + " done!");
 
                 }
-                System.out.println("winner out: " + winnerOutput);
+                System.out.println("Winner output: " + winnerOutput);
                 saveToFile();
                 simulationCounter = 1;
                 winnerOutput = "";

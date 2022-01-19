@@ -6,14 +6,15 @@ public class Player {
     public boolean notHuman;
 
 
-    public Player(String playerType, int playerColor, boolean notHuman, boolean playerTurn) {
+    public Player(String playerType, int playerColor, boolean notHuman) {
         setPlayerType(playerType);
         setPlayerColor(playerColor);
         setNotHuman(notHuman);
         if (isNotHuman()) {
-            setMiniMaxAI(new MiniMaxAI(playerTurn));
-            if (playerType.equals("pruned"))
-                miniMaxAI.setMaxDepth(6);
+            setMiniMaxAI(new MiniMaxAI());
+            if (playerType.equals("pruned")){
+                miniMaxAI.setMaxDepth(8);
+            }
         }
     }
 

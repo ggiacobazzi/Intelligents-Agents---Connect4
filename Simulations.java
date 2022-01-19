@@ -25,7 +25,7 @@ public class Simulations extends JFrame{
 
         JComboBox<String> firstPlayerBox = new JComboBox<>(AIModes);
         firstPlayerBox.addItemListener(e -> {
-            if(e.getStateChange() == ItemEvent.SELECTED) { // Check if the value got selected, ignore if it has been deselected
+            if(e.getStateChange() == ItemEvent.SELECTED) {
                 Object item = e.getItem();
                 setFirstPlayerSim((String)item);
                 System.out.println("First player selected: " + getFirstPlayerSim());
@@ -34,7 +34,7 @@ public class Simulations extends JFrame{
 
         JComboBox<String> secondPlayerBox = new JComboBox<>(AIModes);
         secondPlayerBox.addItemListener(e -> {
-            if(e.getStateChange() == ItemEvent.SELECTED) { // Check if the value got selected, ignore if it has been deselected
+            if(e.getStateChange() == ItemEvent.SELECTED) {
                 Object item = e.getItem();
                 setSecondPlayerSim((String)item);
                 System.out.println("Second player selected: " + getSecondPlayerSim());
